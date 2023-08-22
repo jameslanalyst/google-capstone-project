@@ -280,7 +280,254 @@ WHERE
 
 ## Step 4: Analyze the data
 
-I began my analysis by looking at the data from an overall view then getting more granular.
+I began my analysis by looking for simple insights such as ***total rides***, ***average ride lengths per rider type***
 
 I started with the ***total number of rides*** from July 2022 to June 2023
+
+```sql
+
+-- Average ride length for each group in minutes & all riders
+
+SELECT 
+    CASE WHEN GROUPING(member_casual) = 1 THEN 'all_rider' ELSE member_casual END AS member_casual,
+    AVG(ride_length_minutes) AS average_ride_length_minutes
+FROM
+    cyclistic_trip_last_12m
+GROUP BY 
+    ROLLUP (member_casual);
+
+
+```
+
+Next was to determine the ***busiest day*** for rides per rider type
+
+```sql
+
+-- Counts total rides per weekday for each rider type, ranks them in order, then assigns the name of the week.
+
+WITH Common_Ride_Day AS (
+    SELECT
+        COUNT(*) AS ride_count,
+        member_casual,
+        DATEPART(WEEKDAY, started_at) AS start_weekday
+    FROM
+        cyclistic_trip_last_12m
+    GROUP BY
+        member_casual,
+        DATEPART(WEEKDAY, started_at)
+),
+RankedRides AS (
+    SELECT
+        ride_count,
+        member_casual,
+        start_weekday,
+        ROW_NUMBER() OVER (PARTITION BY member_casual ORDER BY ride_count DESC) AS rn
+    FROM
+        Common_Ride_Day
+)
+SELECT
+    ride_count,
+    member_casual,
+    start_weekday,
+    CASE WHEN start_weekday = 1 THEN 'Sunday'
+         WHEN start_weekday = 2 THEN 'Monday'
+         WHEN start_weekday = 3 THEN 'Tuesday'
+         WHEN start_weekday = 4 THEN 'Wednesday'
+         WHEN start_weekday = 5 THEN 'Thursday'
+         WHEN start_weekday = 6 THEN 'Friday'
+         WHEN start_weekday = 7 THEN 'Saturday'
+    END AS start_ride_day_name
+FROM
+    RankedRides
+WHERE
+    rn = 1;
+
+
+
+-- Calculates total ride per day for rider types
+
+SELECT
+    member_casual,
+    ride_day_name,
+    total_rides_per_day
+FROM (
+    SELECT
+        member_casual,
+        CASE WHEN start_weekday = 1 THEN 'Sunday'
+             WHEN start_weekday = 2 THEN 'Monday'
+             WHEN start_weekday = 3 THEN 'Tuesday'
+             WHEN start_weekday = 4 THEN 'Wednesday'
+             WHEN start_weekday = 5 THEN 'Thursday'
+             WHEN start_weekday = 6 THEN 'Friday'
+             WHEN start_weekday = 7 THEN 'Saturday'
+        END AS ride_day_name,
+        COUNT(*) AS total_rides_per_day
+    FROM (
+        SELECT
+            member_casual,
+            DATEPART(WEEKDAY, started_at) AS start_weekday,
+            DATEDIFF(MINUTE, started_at, ended_at) AS ride_length_minutes
+        FROM
+            cyclistic_trip_last_12m
+    ) AS Rides
+    GROUP BY
+        member_casual,
+        start_weekday
+) AS AvgRidePerWeekday
+ORDER BY
+    member_casual,
+    total_rides_per_day DESC;
+
+
+```
+
+I also wanted to know the ***average length of rides*** per rider throughout the week.
+
+```sql
+
+-- Calculates average ride length per day for rider type 
+
+SELECT
+    member_casual,
+    ride_day_name,
+    average_ride_length_minutes
+FROM (
+    SELECT
+        member_casual,
+        CASE WHEN start_weekday = 1 THEN 'Sunday'
+             WHEN start_weekday = 2 THEN 'Monday'
+             WHEN start_weekday = 3 THEN 'Tuesday'
+             WHEN start_weekday = 4 THEN 'Wednesday'
+             WHEN start_weekday = 5 THEN 'Thursday'
+             WHEN start_weekday = 6 THEN 'Friday'
+             WHEN start_weekday = 7 THEN 'Saturday'
+        END AS ride_day_name,
+        AVG(ride_length_minutes) AS average_ride_length_minutes
+    FROM (
+        SELECT
+            member_casual,
+            DATEPART(WEEKDAY, started_at) AS start_weekday,
+            DATEDIFF(MINUTE, started_at, ended_at) AS ride_length_minutes
+        FROM
+            cyclistic_trip_last_12m
+    ) AS CasualRides
+    GROUP BY
+        member_casual,
+        start_weekday
+) AS AvgRidePerWeekday
+ORDER BY
+    member_casual,
+    average_ride_length_minutes DESC;
+
+```
+
+Next, it was important to determine which ***parts of the day and seasons were the busiest***.
+
+```sql
+
+-- How do time, day, and month affect the rider type
+
+SELECT
+    member_casual,
+    ride_day_name,
+    ride_month_name,
+    ride_hour,
+	--seasons
+    CASE
+        WHEN ride_month IN (12, 1, 2) THEN 'Winter'
+        WHEN ride_month IN (3, 4, 5) THEN 'Spring'
+        WHEN ride_month IN (6, 7, 8) THEN 'Summer'
+        ELSE 'Fall'
+    END AS season,
+	-- daytime
+    CASE
+        WHEN ride_hour BETWEEN 0 AND 11 THEN 'Morning'
+        WHEN ride_hour BETWEEN 12 AND 17 THEN 'Afternoon'
+        ELSE 'Evening'
+    END AS time_of_day,
+    COUNT(*) AS ride_count
+FROM (
+    SELECT
+        member_casual,
+        DATEPART(MONTH, started_at) AS ride_month,
+        DATEPART(HOUR, started_at) AS ride_hour,
+        DATENAME(WEEKDAY, started_at) AS ride_day_name,
+        DATENAME(MONTH, started_at) AS ride_month_name
+    FROM
+        cyclistic_trip_last_12m
+) AS RideData
+GROUP BY
+    member_casual,
+    ride_month,
+    ride_hour,
+    ride_day_name,
+    ride_month_name
+ORDER BY
+    member_casual,
+    season,
+    time_of_day,
+    ride_month,
+    ride_day_name,
+    ride_hour;
+
+```
+
+Because I have geographic locations, it would be helpful to determine which ***stations are the busiest***. 
+
+
+```sql
+
+SELECT
+    COUNT(start_station_name) as most_frequent_start_location,
+	start_station_name,
+    member_casual
+FROM
+    cyclistic_trip_last_12m
+GROUP BY
+    start_station_name,
+    member_casual
+ORDER BY
+    COUNT(start_station_name) DESC;
+
+-- Common end location
+
+SELECT
+    COUNT(end_station_name) as most_frequent_end_location,
+	end_station_name,
+    member_casual
+FROM
+    cyclistic_trip_last_12m
+GROUP BY
+    end_station_name,
+    member_casual
+ORDER BY
+    COUNT(end_station_name) DESC;
+
+```
+
+And lastly, I wanted to determine if riders had a ***preference for bike type***.
+
+```sql
+
+-- Do users have a preference for bike type?
+
+SELECT
+	rideable_type,
+	COUNT(*) as total_rides_by_ride_type,
+	member_casual
+FROM
+	cyclistic_trip_last_12m
+GROUP BY
+	rideable_type,
+	member_casual
+ORDER BY
+	total_rides_by_ride_type;
+
+```
+
+## Step 4: Create a Visualization
+
+Please refer to Tableau for the visualization
+
+## Step 5: My recommendations
 
