@@ -280,7 +280,7 @@ WHERE
 
 ## Step 4: Analyze the data
 
-I began my analysis by looking for simple insights such as ***total rides***, ***average ride lengths per rider type***
+I began my analysis by looking for simple insights such as ***total rides*** and ***average ride lengths per rider type***
 
 I started with the ***total number of rides*** from July 2022 to June 2023
 
