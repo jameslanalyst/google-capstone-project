@@ -527,7 +527,7 @@ ORDER BY
 
 ## Step 4: Create a Visualization
 
-Please refer to Tableau for the visualization
+Please refer to [Tableau](https://public.tableau.com/app/profile/james.lawson2152/viz/CyclisticDashboard_16922696803320/Dashboard1?publish=yes) for the visualization
 
 ## Step 5: My recommendations
 
