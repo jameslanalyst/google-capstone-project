@@ -530,4 +530,6 @@ ORDER BY
 Please refer to [Tableau](https://public.tableau.com/app/profile/james.lawson2152/viz/CyclisticDashboard_16922696803320/Dashboard1?publish=yes) for the visualization
 
 ## Step 5: My recommendations
-
+1. Develop a marketing campaign that targets casual riders during the summer months. Begin testing creatives and offers in May and ramp up in June through July. Specifically, I would increase marketing efforts during the weekend and evening when casual rider activities peak.
+2. Offer an incentive that saves casual riders money when signing up for an annual membership during the weekend.
+3. Increase non-member prices during peak times (evening) which should trigger customers to take advantage of saving opportunities by switching to an annual membership.
