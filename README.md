@@ -527,7 +527,7 @@ ORDER BY
 
 ## Step 4: Create a Visualization
 
-Please refer to [Tableau](https://public.tableau.com/app/profile/james.lawson2152/viz/CyclisticDashboard_16922696803320/Dashboard1?publish=yes) for the visualization
+Please refer to [Tableau](https://public.tableau.com/app/profile/james.lawson2152/viz/CyclisticDashboardVersion2/Dashboard2?publish=yes) for the visualization
 
 ## Step 5: My recommendations
 1. Develop a marketing campaign that targets casual riders during the summer months. Begin testing creatives and offers in May and ramp up in June through July. Specifically, I would increase marketing efforts during the weekend and evening when casual rider activities peak.
